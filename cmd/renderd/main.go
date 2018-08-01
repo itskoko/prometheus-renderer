@@ -22,6 +22,7 @@ const (
 var (
 	prometheusAPI = flag.String("u", "http://localhost:9090", "URL of prometheus server")
 	listenAddr    = flag.String("l", ":8080", "Address to listen on")
+	httpRoot      = flag.String("r", "", "Root path for HTTP endpoints; Use when behind proxy")
 
 	logger = log.With(log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr)), "caller", log.DefaultCaller)
 )
@@ -35,7 +36,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	http.HandleFunc("/graph", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc(*httpRoot+"/graph", func(w http.ResponseWriter, r *http.Request) {
 		status, err := render(rdr, w, r)
 		if err != nil {
 			errStr := err.Error()
