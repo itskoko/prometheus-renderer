@@ -10,15 +10,15 @@ render is a CLI to render a query as png image.
 ```
 Usage of render
   -f string
-    	Path to output file (default "out.png")
+      Path to output file (default "out.png")
   -h int
-    	Height (default 600)
+      Height (default 600)
   -s duration
-    	Graph range (default 1h0m0s)
+      Graph range (default 1h0m0s)
   -u string
-    	URL of prometheus server (default "http://localhost:9090")
+      URL of prometheus server (default "http://localhost:9090")
   -w int
-    	Width (default 800)
+      Width (default 800)
 ```
 
 ### renderd
@@ -27,9 +27,13 @@ renderd is a HTTP server returning an png image for a query.
 ```
 Usage of renderd
   -l string
-    	Address to listen on (default ":8080")
+      Address to listen on (default ":8080")
+  -r string
+      Root path for HTTP endpoints; Use when behind proxy
+  -t string
+      Auth token to require for access
   -u string
-    	URL of prometheus server (default "http://localhost:9090")
+      URL of prometheus server (default "http://localhost:9090")
 ```
 
 #### HTTP API
@@ -39,3 +43,4 @@ The `/graph` GET endpoint takes the following arguments and returns an PNG image
 - `h`: Height (360)
 - `w`: Width (360)
 - `s`: Graph range in seconds (3600)
+- `t`: Auth token, must match `-t` flag ()

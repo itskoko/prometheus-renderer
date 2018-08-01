@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/subtle"
 	"errors"
 	"flag"
 	"net/http"
@@ -23,6 +24,7 @@ var (
 	prometheusAPI = flag.String("u", "http://localhost:9090", "URL of prometheus server")
 	listenAddr    = flag.String("l", ":8080", "Address to listen on")
 	httpRoot      = flag.String("r", "", "Root path for HTTP endpoints; Use when behind proxy")
+	token         = flag.String("t", "", "Auth token to require for access")
 
 	logger = log.With(log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr)), "caller", log.DefaultCaller)
 )
@@ -37,6 +39,11 @@ func main() {
 	}
 
 	http.HandleFunc(*httpRoot+"/graph", func(w http.ResponseWriter, r *http.Request) {
+		t := r.URL.Query().Get("t")
+		if subtle.ConstantTimeCompare([]byte(*token), []byte(t)) != 1 {
+			http.Error(w, "Invalid auth token (t)", http.StatusForbidden)
+			return
+		}
 		status, err := render(rdr, w, r)
 		if err != nil {
 			errStr := err.Error()
