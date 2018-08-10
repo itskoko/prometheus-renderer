@@ -79,9 +79,20 @@ func render(rdr *renderer.Render, w http.ResponseWriter, r *http.Request) (int, 
 	if err != nil {
 		return http.StatusBadRequest, err
 	}
-
-	since := time.Duration(rn) * time.Second
-	if err := rdr.Render(w, query, since, ws, hs); err != nil {
+	legend := false
+	if r.URL.Query().Get("l") != "" {
+		legend = true
+	}
+	end := time.Now()
+	if str := r.URL.Query().Get("e"); str != "" {
+		n, err := strconv.Atoi(str)
+		if err != nil {
+			return http.StatusBadRequest, err
+		}
+		end = time.Unix(int64(n), 0)
+	}
+	start := end.Add(-time.Duration(rn) * time.Second)
+	if err := rdr.Render(w, query, start, end, ws, hs, legend); err != nil {
 		return http.StatusInternalServerError, err
 	}
 	return http.StatusOK, nil

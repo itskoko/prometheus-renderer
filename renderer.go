@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"sort"
 	"strings"
 	"time"
 
@@ -32,13 +33,13 @@ func New(prometheusURL string) (*Render, error) {
 	}, nil
 }
 
-func (r *Render) Render(w io.Writer, query string, since time.Duration, ws, hs int) error {
+func (r *Render) Render(w io.Writer, query string, start, end time.Time, ws, hs int, legend bool) error {
 	plot, err := plot.New()
 	if err != nil {
 		return err
 	}
 	plot.Legend.Top = true
-	timeseries, err := r.queryRange(query, since)
+	timeseries, err := r.queryRange(query, start, end, legend)
 	if err != nil {
 		return err
 	}
@@ -58,12 +59,12 @@ func (r *Render) Render(w io.Writer, query string, since time.Duration, ws, hs i
 }
 
 // returns name, plotter.XYer, name1, plotter.XYer ...
-func (r *Render) queryRange(query string, since time.Duration) ([]interface{}, error) {
+func (r *Render) queryRange(query string, start, end time.Time, legend bool) ([]interface{}, error) {
 	now := time.Now()
 
 	resp, err := r.API.QueryRange(context.Background(), query, v1.Range{
-		Start: now.Add(-since),
-		End:   now,
+		Start: start,
+		End:   end,
 		Step:  60 * time.Second,
 	})
 	if err != nil {
@@ -73,6 +74,7 @@ func (r *Render) queryRange(query string, since time.Duration) ([]interface{}, e
 	if !ok {
 		return nil, errors.New("Expected matrix")
 	}
+	sort.Sort(matrix)
 	ret := make([]interface{}, 0)
 	for _, ss := range matrix {
 		pts := make(plotter.XYs, len(ss.Values))
@@ -80,7 +82,10 @@ func (r *Render) queryRange(query string, since time.Duration) ([]interface{}, e
 			pts[i].Y = float64(sample.Value)
 			pts[i].X = float64(sample.Timestamp.Unix()-now.Unix()) / 60
 		}
-		ret = append(ret, formatMetric(ss.Metric), pts)
+		if legend {
+			ret = append(ret, formatMetric(ss.Metric))
+		}
+		ret = append(ret, pts)
 	}
 	return ret, nil
 }

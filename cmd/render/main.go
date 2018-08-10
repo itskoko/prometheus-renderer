@@ -16,6 +16,7 @@ var (
 	since         = flag.Duration("s", 1*time.Hour, "Graph range")
 	width         = flag.Int("w", 800, "Width")
 	height        = flag.Int("h", 600, "Height")
+	legend        = flag.Bool("l", true, "Show legend")
 	logger        = log.With(log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr)), "caller", log.DefaultCaller)
 )
 
@@ -38,7 +39,7 @@ func main() {
 		level.Error(logger).Log("msg", "Couldn't create renderer", "err", err)
 		os.Exit(1)
 	}
-	if err := r.Render(f, query, *since, *width, *height); err != nil {
+	if err := r.Render(f, query, time.Now().Add(-*since), time.Now(), *width, *height, *legend); err != nil {
 		level.Error(logger).Log("msg", "Couldn't render expression", "err", err)
 	}
 }
